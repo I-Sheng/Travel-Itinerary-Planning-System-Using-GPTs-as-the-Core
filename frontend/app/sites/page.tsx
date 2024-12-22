@@ -3,6 +3,7 @@ import SiteCard from "../components/SiteCard";
 
 interface SiteNameProps {
   name: string;
+  metadata: { type: string };
 }
 
 const Site: React.FC = () => {
@@ -16,6 +17,7 @@ const Site: React.FC = () => {
                 title={value.name}
                 imageSrc={`/images/${value.name.replace(/\s/g, "_")}.jpg`}
                 alt={value.name}
+                isFood={value.metadata.type === "food"}
               />
             </li>
           )

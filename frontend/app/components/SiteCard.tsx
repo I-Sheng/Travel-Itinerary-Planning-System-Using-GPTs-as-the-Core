@@ -7,12 +7,17 @@ interface CardProps {
   title: string;
   imageSrc: string;
   alt: string;
+  isFood: boolean;
 }
 
-const SiteCard: React.FC<CardProps> = ({ title, imageSrc, alt }) => {
+const SiteCard: React.FC<CardProps> = ({ title, imageSrc, alt, isFood }) => {
   return (
     <>
-      <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md text-black h-full w-full">
+      <div
+        className={`flex flex-col items-center p-4 rounded-lg text-black shadow-md h-full w-full ${
+          isFood ? "bg-gray-200 " : "bg-white"
+        }`}
+      >
         <h2 className="text-lg font-bold mt-2 ml-2 content-center">{title}</h2>
         <Image
           src={imageSrc}

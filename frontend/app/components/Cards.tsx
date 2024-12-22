@@ -41,10 +41,9 @@ const Card: React.FC<CardProps> = ({
   return (
     <>
       <div
-        className={`flex flex-col items-center p-4 rounded-lg shadow-md text-black h-full w-full ${
-          isFood ? "bg-pink-200" : "bg-purple-200"
-        }
-      `}
+        className={`flex flex-col items-center p-4 rounded-lg text-black shadow-md h-full w-full ${
+          isFood ? "bg-gray-200 " : "bg-white"
+        }`}
       >
         <h2 className="text-lg font-bold mt-2 ml-2 content-center">{title}</h2>
         <p>{`週日開放時間: ${splitText(openingTime)}`}</p>

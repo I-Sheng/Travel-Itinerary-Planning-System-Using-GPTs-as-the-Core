@@ -7,7 +7,9 @@ const Header: React.FC = () => {
     <header className="flex items-center justify-between bg-white shadow-md py-4 px-8">
       {/* Logo */}
       <div className="flex items-center gap-3">
-        <Image src="/favicon.ico" alt="ITravel Logo" width={24} height={24} />
+        <Link href="/" passHref>
+          <Image src="/favicon.ico" alt="ITravel Logo" width={24} height={24} />
+        </Link>
       </div>
 
       {/* Brand Name */}
