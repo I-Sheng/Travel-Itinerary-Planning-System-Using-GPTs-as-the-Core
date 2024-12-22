@@ -124,6 +124,10 @@ const RecommendedSitesComponent: React.FC<RecommendedSitesProps> = ({
                             5
                         ) * 5
                       }
+                      isFood={
+                        data[site as keyof typeof data]["metadata"]["type"] ===
+                        "food"
+                      }
                       onToggle={toggleOption}
                     />
                   </li>

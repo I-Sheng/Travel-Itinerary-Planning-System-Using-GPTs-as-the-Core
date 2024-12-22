@@ -5,6 +5,7 @@ interface CardProps {
   title: string;
   openingTime: string;
   stay_time: number | null;
+  isFood: boolean;
   onToggle: (value: string) => void;
 }
 
@@ -12,6 +13,7 @@ const Card: React.FC<CardProps> = ({
   title,
   openingTime,
   stay_time,
+  isFood,
   onToggle,
 }) => {
   function transferTime(time: number) {
@@ -38,7 +40,12 @@ const Card: React.FC<CardProps> = ({
   };
   return (
     <>
-      <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md text-black h-full w-full">
+      <div
+        className={`flex flex-col items-center p-4 rounded-lg shadow-md text-black h-full w-full ${
+          isFood ? "bg-pink-200" : "bg-purple-200"
+        }
+      `}
+      >
         <h2 className="text-lg font-bold mt-2 ml-2 content-center">{title}</h2>
         <p>{`週日開放時間: ${splitText(openingTime)}`}</p>
         {stay_time !== null && <p>預估停留時間: {transferTime(stay_time)}</p>}
