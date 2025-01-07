@@ -33,7 +33,7 @@ This project introduces a novel travel itinerary planning system leveraging Larg
 ### Environment setting
 Create a .env File
 Create a .env file in the root directory of your project with the following content:
-    ```env
+```env
 # Generative AI
 OPENAI_API_KEY='YOUR_OPENAI_API_KEY'
 ANTHROPIC_API_KEY='YOUR_ANTHROPIC_API_KEY'
@@ -45,7 +45,7 @@ GOOGLE_MAP_API_KEY='YOUR_GOOGLE_MAP_API_KEY'
 # LangChain
 LANGCHAIN_HUB_API_KEY='YOUR_LANGCHAIN_HUB_API_KEY'
 LANGCHAIN_API_KEY='YOUR_LANGCHAIN_API_KEY'
-    ```
+```
 ### Run Docker
 ```bash
 docker compose up
