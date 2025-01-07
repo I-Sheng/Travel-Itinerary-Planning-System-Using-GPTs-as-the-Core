@@ -1,27 +1,24 @@
-# 專案目的
-此 GitHub repository 是國科會計畫「以 GPT 為核心的旅遊行程規劃系統」的專案。原計畫中預計使用 GPT（客製化的 ChatGPT）作為核心模型，但隨著科技技術的進步以及客製化需求的增加，現已改用 LangChain 進行實作。
+## Introduction
+This project introduces a novel travel itinerary planning system leveraging Large Language Models (LLMs) like GPT-4. The system addresses challenges in self-planned travel by simplifying complex tasks such as route optimization, time management, and preference alignment. Key features include personalized recommendations, predictive stay time modeling, and itinerary optimization using the Vehicle Routing Problem with Time Windows (VRPTW) algorithm.
 
-## 專案架構圖
-![旅遊規劃架構圖 (1)](https://github.com/user-attachments/assets/11ae480b-030c-4c18-a28f-2b630f2524e4)
+## System Architecture
+![image](https://github.com/user-attachments/assets/95264cd2-dd9d-4b99-a1df-2d2a3fa5f965)
 
-## 使用者使用情境
-![景點推薦](https://github.com/user-attachments/assets/fd0e9925-7303-47c4-9d90-5e7c26d7b7c4)
-![行程規劃](https://github.com/user-attachments/assets/ec3ef899-9eaf-401b-9581-f4548327aa5e)
+## Contributions
+1. Utilized LLMs with RAG to recommend themed Points of Interest (POIs) tailored to user preferences
+2. Developed predictive models for estimating stay times at POIs, ensuring itineraries respect critical time constraints
+3. Implemented the VRPTW algorithm for optimized travel itinerary planning
+4. Developed an advanced online platform for personalized and time-efficient travel itinerary planning.
 
-## 專案實作細節
-根據專案架構圖，本專案以嘉義旅遊為目的地，實作分為四個主要部分：
-
-1. **資料收集**：收集嘉義旅遊相關資訊，包括景點、餐廳及飯店。
-   → 目錄：`/webcrab`
-
-2. **停留時間計算**：計算各景點建議的停留時間。
-   → 目錄：`/waiting_time`
-
-3. **資訊查詢**：在使用者決定景點後，取得各景點的詳細資訊。
-   → 腳本：`/langchain/distance_matrix.py`
-
-4. **行程規劃**：將取得的相關資訊放入演算法中，並生成景點行程規劃。
-   （**注意：此步驟尚未完成**）
+## System Website
+### Desktop version
+![computer 1](https://github.com/user-attachments/assets/84557442-5843-4ae4-9bbe-9b4d20631591)
+![computer 2](https://github.com/user-attachments/assets/cbcfc321-d6ab-4932-aaeb-aa4a9eaed621)
+![computer 3](https://github.com/user-attachments/assets/ee30290a-287c-4771-9398-1087ab56d5df)
+![computer 4](https://github.com/user-attachments/assets/9015a93d-fd9f-429f-bc0d-d81c0f28947f)
+![computer 5](https://github.com/user-attachments/assets/61e2b203-7189-42c5-b89c-2559820ba0d9)
+![computer 6](https://github.com/user-attachments/assets/ad22941f-7907-40a8-b5ce-7b21499258ca)
+### Mobile version
 
 ## 環境設定
 
