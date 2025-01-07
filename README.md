@@ -18,23 +18,38 @@ This project introduces a novel travel itinerary planning system leveraging Larg
 ![computer 4](https://github.com/user-attachments/assets/9015a93d-fd9f-429f-bc0d-d81c0f28947f)
 ![computer 5](https://github.com/user-attachments/assets/61e2b203-7189-42c5-b89c-2559820ba0d9)
 ![computer 6](https://github.com/user-attachments/assets/ad22941f-7907-40a8-b5ce-7b21499258ca)
+
 ### Mobile version
+| ![mobile 1](https://github.com/user-attachments/assets/5983dc6b-234c-4585-bbb1-364307038704) | ![mobile 2](https://github.com/user-attachments/assets/1fc9085a-5f7d-4e26-bdd0-41f341b728fa) | ![mobile 3](https://github.com/user-attachments/assets/b2bd59ad-a421-4477-b99c-236dc9f65ba6) |
+|---|---|---|
+| ![mobile 4](https://github.com/user-attachments/assets/108bf84a-13b1-4bea-8488-c1571455bb34) | ![mobile 5](https://github.com/user-attachments/assets/8be494b5-7ad1-4dc1-b3e9-90e19e0446ea) | ![mobile 6](https://github.com/user-attachments/assets/3acfc7b1-ee43-48b8-a2c9-38f6858a08cb) |
 
-## 環境設定
+## Live Website
+[demo website](www.isheng.xyz)
+* The website may be offline.
 
-1. **建立 `.env` 檔案**
-   在專案根目錄下建立 `.env` 檔案，內容如下：
+## Run Locally
+
+### Environment setting
+Create a .env File
+Create a .env file in the root directory of your project with the following content:
     ```env
-    # 生成式 AI
-    OPENAI_API_KEY='YOUR_OPENAI_API_KEY'
-    ANTHROPIC_API_KEY='YOUR_ANTHROPIC_API_KEY'
-    GOOGLE_API_KEY='YOUR_GOOGLE_API_KEY'
+# Generative AI
+OPENAI_API_KEY='YOUR_OPENAI_API_KEY'
+ANTHROPIC_API_KEY='YOUR_ANTHROPIC_API_KEY'
+GOOGLE_API_KEY='YOUR_GOOGLE_API_KEY'
 
-    # Google 地圖 API
-    GOOGLE_MAP_API_KEY='YOUR_GOOGLE_MAP_API_KEY'
+# Google Maps API
+GOOGLE_MAP_API_KEY='YOUR_GOOGLE_MAP_API_KEY'
 
-    # LangChain
-    LANGCHAIN_HUB_API_KEY='YOUR_LANGCHAIN_HUB_API_KEY'
-    LANGCHAIN_API_KEY='YOUR_LANGCHAIN_API_KEY'
+# LangChain
+LANGCHAIN_HUB_API_KEY='YOUR_LANGCHAIN_HUB_API_KEY'
+LANGCHAIN_API_KEY='YOUR_LANGCHAIN_API_KEY'
     ```
+### Run Docker
+```bash
+docker compose up
+``
+* The frontend will be available locally on port 3000.
+
 
