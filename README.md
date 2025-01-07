@@ -49,7 +49,7 @@ LANGCHAIN_API_KEY='YOUR_LANGCHAIN_API_KEY'
 ### Run Docker
 ```bash
 docker compose up
-``
+```
 * The frontend will be available locally on port 3000.
 
 
