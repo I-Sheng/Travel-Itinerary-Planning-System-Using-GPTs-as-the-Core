@@ -16,7 +16,7 @@ This project introduces a novel travel itinerary planning system leveraging Larg
 ![computer 2](https://github.com/user-attachments/assets/cbcfc321-d6ab-4932-aaeb-aa4a9eaed621)
 ![computer 3](https://github.com/user-attachments/assets/ee30290a-287c-4771-9398-1087ab56d5df)
 ![computer 4](https://github.com/user-attachments/assets/9015a93d-fd9f-429f-bc0d-d81c0f28947f)
-![computer 5](https://github.com/user-attachments/assets/61e2b203-7189-42c5-b89c-2559820ba0d9)
+![computer 5](https://github.com/user-attachments/assets/4aacfdc6-4f33-4936-acb1-3a2e1e352ca5)
 ![computer 6](https://github.com/user-attachments/assets/ad22941f-7907-40a8-b5ce-7b21499258ca)
 
 ### Mobile version
