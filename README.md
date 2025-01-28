@@ -25,7 +25,7 @@ This project introduces a novel travel itinerary planning system leveraging Larg
 | ![mobile 4](https://github.com/user-attachments/assets/108bf84a-13b1-4bea-8488-c1571455bb34) | ![mobile 5](https://github.com/user-attachments/assets/8be494b5-7ad1-4dc1-b3e9-90e19e0446ea) | ![mobile 6](https://github.com/user-attachments/assets/3acfc7b1-ee43-48b8-a2c9-38f6858a08cb) |
 
 ## Live Website
-[demo website](www.isheng.xyz)
+[demo website](https://isheng.xyz/)
 * The website may be offline.
 
 ## Run Locally
