@@ -1,6 +1,6 @@
 
 # Waiting Time Prediction
-[![ch](https://img.shields.io/badge/lang-ch-green.svg)](https://github.com/I-Sheng/Traveling-Planner-With-LLM/blob/main/waiting_time/README.md)
+[![ch](https://img.shields.io/badge/lang-ch-green.svg)](https://github.com/I-Sheng/Traveling-Planner-With-LLM/blob/main/data/waiting_time/README.md)
 
 ## Content Overview
 When planning a trip, one crucial factor to consider is the amount of time spent at each spot. However, data retrieved from the Google API does not always include waiting time. This project aims to use popular times data to train a model to predict the waiting time for a site, enabling better planning for travelers.
