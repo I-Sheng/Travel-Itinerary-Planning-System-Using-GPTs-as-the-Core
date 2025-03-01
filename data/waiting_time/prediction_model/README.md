@@ -33,6 +33,7 @@ q_{\text{error}} = \frac{|p - q|}{q}
 - [GRU 模型代碼](https://colab.research.google.com/drive/1EdBMtwskH62YuKUllwOkzP5mXTN1yZBe?usp=sharing)
 - [LSTM 模型代碼](https://colab.research.google.com/drive/1sALbzUHX_04mqT4WX4AHy13H21vctoh0?usp=sharing)
 - [RNN 模型代碼](https://colab.research.google.com/drive/1ntiwLf7wpDGFm7hlah1YTZtEV0hzrvTA?usp=sharing)
+- [1d-CNN code](https://colab.research.google.com/drive/1Y5g_BWPK-AIgD9gtE9SQFj0OTxJIxwpv?usp=sharing)
 
 ## 新模型設計（newModel2）
 * 預測下限模型
@@ -54,6 +55,7 @@ q_{\text{error}} = \frac{|p - q|}{q}
 - [newModel2_RNN](https://colab.research.google.com/drive/1A41-HbKuhHhpkzfwtj6Aquuf_CHa10bC?usp=sharing)
 - [newModel2_GRU](https://colab.research.google.com/drive/1mMaPH6UVIoYmOsAe5Kx2lawdCpHZ_ADT?usp=sharing)
 - [newModel2_LSTM](https://colab.research.google.com/drive/1oFqsdrmMJPP93IabW7WCTEwBIro_0LZj?usp=sharing)
+- [newModel2_1d-CNN](https://colab.research.google.com/drive/1Eese8Q7-4u51YmOIDNbCA7TIDgZ0GinQ?usp=sharing)
 
 ## FQA
 * Q: 為何不使用 transformer?
