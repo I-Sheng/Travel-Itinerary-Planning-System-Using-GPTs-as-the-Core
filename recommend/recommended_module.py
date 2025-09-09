@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.cache import BaseCache
+from langchain_core.callbacks import Callbacks
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import SimpleSequentialChain
@@ -13,6 +15,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 import time
 
+# Try to rebuild the ChatOpenAI model after importing required dependencies
+try:
+    ChatOpenAI.model_rebuild()
+except Exception as e:
+    print(f"Warning: Could not rebuild ChatOpenAI model: {e}")
 
 # Load environment variables from .env
 load_dotenv()
@@ -67,9 +74,9 @@ def combine_with_retrieval(query, retrieved_docs):
 
 # Create a ChatOpenAI model
 def query_llm(combined_input):
-    #model = ChatOpenAI(model="gpt-4o-mini")
-    #model = ChatOpenAI(model="o1-mini")
-    model = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+    # model = ChatOpenAI(model="gpt-4o-mini")
+    model = ChatOpenAI(model="gpt-4o-mini")  # Changed from o1-mini to gpt-4o-mini
+    # model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-001")
     messages = [
         SystemMessage(content="你是一個嘉義在地導遊。"),
         HumanMessage(content=combined_input),
