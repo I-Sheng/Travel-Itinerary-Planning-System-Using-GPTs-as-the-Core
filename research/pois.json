@@ -1,0 +1,58 @@
+{
+  "result": [
+    {
+      "arrival": 480,
+      "name": "嘉義火車站",
+      "service": 30,
+      "travel": null
+    },
+    {
+      "arrival": 510,
+      "name": "嘉義市環市自行車道",
+      "service": 60,
+      "travel": 20
+    },
+    {
+      "arrival": 590,
+      "name": "貳陸陸杉space",
+      "service": 45,
+      "travel": 15
+    },
+    {
+      "arrival": 650,
+      "name": "嘉義製材所",
+      "service": 30,
+      "travel": 10
+    },
+    {
+      "arrival": 690,
+      "name": "嘉義公園",
+      "service": 60,
+      "travel": 15
+    },
+    {
+      "arrival": 765,
+      "name": "射日塔",
+      "service": 30,
+      "travel": 10
+    },
+    {
+      "arrival": 805,
+      "name": "嘉義文化創意產業園區",
+      "service": 60,
+      "travel": 20
+    },
+    {
+      "arrival": 885,
+      "name": "嘉人酒場",
+      "service": 90,
+      "travel": 15
+    },
+    {
+      "arrival": 990,
+      "name": "嘉義火車站",
+      "service": null,
+      "travel": 20
+    }
+  ]
+}
