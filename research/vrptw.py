@@ -146,7 +146,7 @@ def print_solution(data, manager, routing, assignment):  # pylint:disable=too-ma
             arrival_time = assignment.Min(time_var)
             departure_time = arrival_time + data["service"][node]
             slack_var = time_dimension.SlackVar(index)
-            arr[idx]= {'name': data['name'][node], 'arrival': arrival_time, 'service': data['service'][node], 'vehicle': vehicle_id, 'end_node': False}
+            arr[idx]= {'name': data['name'][node], 'arrival': arrival_time + 480, 'service': data['service'][node], 'vehicle': vehicle_id, 'end_node': False}
             plan_output += (
                 f" Node {data['name'][node]} - Arrival: {arrival_time}, \n"
                 #f" Time({assignment.Min(time_var)}, {assignment.Max(time_var)})\n"

@@ -68,7 +68,7 @@ class DistanceMatrix():  # Extend unittest.TestCase
                 # print(dist)
                 if 'duration_in_traffic' in dist:
                     raw_minutes:int = math.ceil(dist['duration_in_traffic']['value'] / 60)
-                    adjusted = raw_minutes + (10 - (raw_minutes % 10)) if raw_minutes % 10 != 0 else raw_minutes
+                    adjusted = raw_minutes + (5 - (raw_minutes % 5)) if raw_minutes % 10 != 0 else raw_minutes
                     tmp.append({
                         "raw": raw_minutes,
                         "adjusted": adjusted

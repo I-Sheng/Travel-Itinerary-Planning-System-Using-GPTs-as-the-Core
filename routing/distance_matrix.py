@@ -68,7 +68,7 @@ class DistanceMatrix():  # Extend unittest.TestCase
                 # print(dist)
                 if 'duration_in_traffic' in dist:
                     minutes:int = math.ceil(dist['duration_in_traffic']['value'] / 60)
-                    minutes += (10 - (minutes % 10))
+                    minutes += (5 - (minutes % 5))
                     tmp.append(minutes)
                 else:
                     print("No duration_in_traffic in the element, something go wrong!")

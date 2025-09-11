@@ -1,6 +1,9 @@
 import os
 import json
 import requests
+import pandas as pd
+import statistics
+from datetime import datetime
 
 from typing import List, Optional
 from pydantic import BaseModel
@@ -112,8 +115,8 @@ def planning(preference):
     routing_res = plan_itinerary_with_routing(recommend_poi)
     if routing_res and isinstance(routing_res, tuple) and len(routing_res) == 4 and routing_res[0] is not None:
         plan_itinerary, sites, raw_time_matrix, time_windows = routing_res
-        print('time windows:')
-        print(time_windows)
+        #print('time windows:')
+        #print(time_windows)
     else:
         print("⚠️ VRPTW found no solution; continuing with LLM-only itinerary.")
         return None
@@ -139,105 +142,382 @@ def planning(preference):
         cur_poi = plan_itinerary_llm[i]['name']
         nxt_poi = plan_itinerary_llm[i+1]['name']
         plan_itinerary_llm[i]['travel_raw'] = time_matrix[cur_poi][nxt_poi]
-
-    print('\n\n')
-    print('VRPTW system itinerary')
-    print(plan_itinerary)
-    print('\nLLM system itinerary')
-    print(plan_itinerary_llm)
-
-def calculation_matrix():
-    preference_list =   [
-            "親子旅遊",
-            "文化古蹟",
-            "自然風光",
-            "冒險體驗",
-            "購物旅遊",
-            "療癒放鬆",
-            "生態旅遊",
-            "藝術之旅",
-        ]
-
-    example = "生態旅遊"
-    for i in range(5):
-        ans = planning(example)
-        print(f'The answer of {i}: {ans}')
+        
+    #print('\n\n')
+    #print('VRPTW system itinerary')
+    #print(plan_itinerary)
+    return  plan_itinerary, plan_itinerary_llm, time_windows
 
 
+def calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows):
+    """
+    Calculate four indicators for comparing VRPTW and LLM itinerary systems:
+    1. travel / travel_raw ratio (average and variation)
+    2. service / real_service ratio for sites (average and variation)
+    3. service / real_service ratio for food (average and variation)
+    4. Number of sites/food out of service time
+    """
+    import statistics
+    
+    def calculate_travel_ratios(itinerary):
+        """Calculate travel/travel_raw ratios"""
+        ratios = []
+        for i in range(len(itinerary) - 1):
+            if itinerary[i].get('travel') and itinerary[i].get('travel_raw'):
+                ratio = itinerary[i]['travel'] / itinerary[i]['travel_raw']
+                ratios.append(ratio)
+        return ratios
+    
+    def calculate_service_ratios(itinerary, metadata_type):
+        """Calculate service/real_service ratios for specific metadata type"""
+        ratios = []
+        for poi in itinerary:
+            if (poi.get('metadata') == metadata_type and 
+                poi.get('service') and poi.get('real_service') and 
+                poi['real_service'] > 0):
+                ratio = poi['service'] / poi['real_service']
+                ratios.append(ratio)
+        return ratios
+    
+    def count_out_of_service_time(itinerary, time_windows):
+        """Count sites/food that are out of service time"""
+        count = 0
+        for poi in itinerary:
+            if poi.get('name') in time_windows and poi.get('arrival') is not None:
+                time_window = time_windows[poi['name']]
+                arrival = poi['arrival']
+                service_time = poi.get('service', 0)
+                
+                # Handle None service time
+                if service_time is None:
+                    service_time = 0
+                
+                # Check if arrival time is before opening or departure time is after closing
+                if (arrival < time_window[0] or 
+                    arrival + service_time > time_window[1]):
+                    count += 1
+        return count
+    
+    # Calculate indicators for both systems
+    vrptw_indicators = {}
+    llm_indicators = {}
+    
+    # 1. Travel ratios
+    vrptw_travel_ratios = calculate_travel_ratios(plan_itinerary)
+    llm_travel_ratios = calculate_travel_ratios(plan_itinerary_llm)
+    
+    vrptw_indicators['travel_ratio'] = {
+        'average': statistics.mean(vrptw_travel_ratios) if vrptw_travel_ratios else 0,
+        'variation': statistics.stdev(vrptw_travel_ratios) if len(vrptw_travel_ratios) > 1 else 0
+    }
+    
+    llm_indicators['travel_ratio'] = {
+        'average': statistics.mean(llm_travel_ratios) if llm_travel_ratios else 0,
+        'variation': statistics.stdev(llm_travel_ratios) if len(llm_travel_ratios) > 1 else 0
+    }
+    
+    # 2. Service ratios for sites
+    vrptw_site_ratios = calculate_service_ratios(plan_itinerary, 'site')
+    llm_site_ratios = calculate_service_ratios(plan_itinerary_llm, 'site')
+    
+    vrptw_indicators['site_service_ratio'] = {
+        'average': statistics.mean(vrptw_site_ratios) if vrptw_site_ratios else 0,
+        'variation': statistics.stdev(vrptw_site_ratios) if len(vrptw_site_ratios) > 1 else 0
+    }
+    
+    llm_indicators['site_service_ratio'] = {
+        'average': statistics.mean(llm_site_ratios) if llm_site_ratios else 0,
+        'variation': statistics.stdev(llm_site_ratios) if len(llm_site_ratios) > 1 else 0
+    }
+    
+    # 3. Service ratios for food
+    vrptw_food_ratios = calculate_service_ratios(plan_itinerary, 'food')
+    llm_food_ratios = calculate_service_ratios(plan_itinerary_llm, 'food')
+    
+    vrptw_indicators['food_service_ratio'] = {
+        'average': statistics.mean(vrptw_food_ratios) if vrptw_food_ratios else 0,
+        'variation': statistics.stdev(vrptw_food_ratios) if len(vrptw_food_ratios) > 1 else 0
+    }
+    
+    llm_indicators['food_service_ratio'] = {
+        'average': statistics.mean(llm_food_ratios) if llm_food_ratios else 0,
+        'variation': statistics.stdev(llm_food_ratios) if len(llm_food_ratios) > 1 else 0
+    }
+    
+    # 4. Out of service time count
+    vrptw_indicators['out_of_service_count'] = count_out_of_service_time(plan_itinerary, time_windows)
+    llm_indicators['out_of_service_count'] = count_out_of_service_time(plan_itinerary_llm, time_windows)
+    
+    return {
+        'VRPTW': vrptw_indicators,
+        'LLM': llm_indicators
+    }
+
+def test_indicators_with_example(plan_itinerary, plan_itinerary_llm, time_windows):
+    # Calculate indicators
+    indicators = calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows)
+    
+    print("=== INDICATOR ANALYSIS RESULTS ===")
+    print()
+    
+    for system, data in indicators.items():
+        print(f"--- {system} System ---")
+        print(f"1. Travel/Travel_raw Ratio:")
+        print(f"   Average: {data['travel_ratio']['average']:.4f}")
+        print(f"   Variation: {data['travel_ratio']['variation']:.4f}")
+        print()
+        
+        print(f"2. Service/Real_service Ratio (Sites):")
+        print(f"   Average: {data['site_service_ratio']['average']:.4f}")
+        print(f"   Variation: {data['site_service_ratio']['variation']:.4f}")
+        print()
+        
+        print(f"3. Service/Real_service Ratio (Food):")
+        print(f"   Average: {data['food_service_ratio']['average']:.4f}")
+        print(f"   Variation: {data['food_service_ratio']['variation']:.4f}")
+        print()
+        
+        print(f"4. Out of Service Time Count:")
+        print(f"   Count: {data['out_of_service_count']}")
+        print()
+        print("-" * 50)
+        print()
+
+def calculation_matrix(iterations_per_category=100):
+    preference_list = [
+        "親子旅遊",
+        "文化古蹟", 
+        "自然風光",
+        "冒險體驗",
+        "購物旅遊",
+        "療癒放鬆",
+        "生態旅遊",
+        "藝術之旅",
+    ]
+    
+    # Dictionary to store all results
+    all_results = {}
+    
+    print(f"Starting comprehensive testing for {len(preference_list)} categories with {iterations_per_category} iterations each...")
+    print(f"Total iterations: {len(preference_list) * iterations_per_category}")
+    print("=" * 80)
+    
+    for category_idx, preference in enumerate(preference_list, 1):
+        print(f"\n[{category_idx}/{len(preference_list)}] Testing category: {preference}")
+        print("-" * 50)
+        
+        # Store results for this category
+        category_results = {
+            'VRPTW': {
+                'travel_ratio_avg': [],
+                'travel_ratio_var': [],
+                'site_service_ratio_avg': [],
+                'site_service_ratio_var': [],
+                'food_service_ratio_avg': [],
+                'food_service_ratio_var': [],
+                'out_of_service_count': []
+            },
+            'LLM': {
+                'travel_ratio_avg': [],
+                'travel_ratio_var': [],
+                'site_service_ratio_avg': [],
+                'site_service_ratio_var': [],
+                'food_service_ratio_avg': [],
+                'food_service_ratio_var': [],
+                'out_of_service_count': []
+            }
+        }
+        
+        successful_runs = 0
+        
+        for iteration in range(iterations_per_category):
+            if (iteration + 1) % max(1, iterations_per_category // 5) == 0:  # Show progress every 20% of iterations
+                print(f"  Progress: {iteration + 1}/{iterations_per_category} iterations completed")
+            
+            try:
+                ans = planning(preference)
+                if ans is not None:
+                    plan_itinerary, plan_itinerary_llm, time_windows = ans
+                    indicators = calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows)
+                    
+                    # Store VRPTW results
+                    category_results['VRPTW']['travel_ratio_avg'].append(indicators['VRPTW']['travel_ratio']['average'])
+                    category_results['VRPTW']['travel_ratio_var'].append(indicators['VRPTW']['travel_ratio']['variation'])
+                    category_results['VRPTW']['site_service_ratio_avg'].append(indicators['VRPTW']['site_service_ratio']['average'])
+                    category_results['VRPTW']['site_service_ratio_var'].append(indicators['VRPTW']['site_service_ratio']['variation'])
+                    category_results['VRPTW']['food_service_ratio_avg'].append(indicators['VRPTW']['food_service_ratio']['average'])
+                    category_results['VRPTW']['food_service_ratio_var'].append(indicators['VRPTW']['food_service_ratio']['variation'])
+                    category_results['VRPTW']['out_of_service_count'].append(indicators['VRPTW']['out_of_service_count'])
+                    
+                    # Store LLM results
+                    category_results['LLM']['travel_ratio_avg'].append(indicators['LLM']['travel_ratio']['average'])
+                    category_results['LLM']['travel_ratio_var'].append(indicators['LLM']['travel_ratio']['variation'])
+                    category_results['LLM']['site_service_ratio_avg'].append(indicators['LLM']['site_service_ratio']['average'])
+                    category_results['LLM']['site_service_ratio_var'].append(indicators['LLM']['site_service_ratio']['variation'])
+                    category_results['LLM']['food_service_ratio_avg'].append(indicators['LLM']['food_service_ratio']['average'])
+                    category_results['LLM']['food_service_ratio_var'].append(indicators['LLM']['food_service_ratio']['variation'])
+                    category_results['LLM']['out_of_service_count'].append(indicators['LLM']['out_of_service_count'])
+                    
+                    successful_runs += 1
+                    
+            except Exception as e:
+                print(f"  Error in iteration {iteration + 1}: {str(e)}")
+                continue
+        
+        print(f"  Completed: {successful_runs}/{iterations_per_category} successful runs for {preference}")
+        
+        # Calculate averages for this category
+        category_averages = {}
+        for system in ['VRPTW', 'LLM']:
+            category_averages[system] = {}
+            for metric in category_results[system]:
+                if category_results[system][metric]:  # Check if list is not empty
+                    category_averages[system][metric] = statistics.mean(category_results[system][metric])
+                else:
+                    category_averages[system][metric] = 0
+        
+        all_results[preference] = category_averages
+    
+    # Create DataFrame and export to CSV/Excel
+    export_results_to_csv(all_results)
+    export_results_to_excel(all_results)
+    
+    return all_results
 
 
-def main():
-    calculation_matrix()
+
+
+
+
+def export_results_to_csv(all_results):
+    """Export results to CSV file"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"indicator_results_{timestamp}.csv"
+    
+    # Prepare data for CSV
+    csv_data = []
+    
+    for category, systems in all_results.items():
+        for system, metrics in systems.items():
+            row = {
+                'Category': category,
+                'System': system,
+                'Travel_Ratio_Avg': metrics['travel_ratio_avg'],
+                'Travel_Ratio_Var': metrics['travel_ratio_var'],
+                'Site_Service_Ratio_Avg': metrics['site_service_ratio_avg'],
+                'Site_Service_Ratio_Var': metrics['site_service_ratio_var'],
+                'Food_Service_Ratio_Avg': metrics['food_service_ratio_avg'],
+                'Food_Service_Ratio_Var': metrics['food_service_ratio_var'],
+                'Out_of_Service_Count': metrics['out_of_service_count']
+            }
+            csv_data.append(row)
+    
+    # Create DataFrame and save
+    df = pd.DataFrame(csv_data)
+    df.to_csv(filename, index=False, encoding='utf-8-sig')
+    print(f"\n✅ Results exported to CSV: {filename}")
+    return filename
+
+
+def export_results_to_excel(all_results):
+    """Export results to Excel file with multiple sheets"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"indicator_results_{timestamp}.xlsx"
+    
+    with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        # Sheet 1: Summary by Category and System
+        summary_data = []
+        for category, systems in all_results.items():
+            for system, metrics in systems.items():
+                row = {
+                    'Category': category,
+                    'System': system,
+                    'Travel_Ratio_Avg': metrics['travel_ratio_avg'],
+                    'Travel_Ratio_Var': metrics['travel_ratio_var'],
+                    'Site_Service_Ratio_Avg': metrics['site_service_ratio_avg'],
+                    'Site_Service_Ratio_Var': metrics['site_service_ratio_var'],
+                    'Food_Service_Ratio_Avg': metrics['food_service_ratio_avg'],
+                    'Food_Service_Ratio_Var': metrics['food_service_ratio_var'],
+                    'Out_of_Service_Count': metrics['out_of_service_count']
+                }
+                summary_data.append(row)
+        
+        summary_df = pd.DataFrame(summary_data)
+        summary_df.to_excel(writer, sheet_name='Summary', index=False)
+        
+        # Sheet 2: VRPTW Results Only
+        vrptw_data = [row for row in summary_data if row['System'] == 'VRPTW']
+        vrptw_df = pd.DataFrame(vrptw_data)
+        vrptw_df.to_excel(writer, sheet_name='VRPTW_Only', index=False)
+        
+        # Sheet 3: LLM Results Only
+        llm_data = [row for row in summary_data if row['System'] == 'LLM']
+        llm_df = pd.DataFrame(llm_data)
+        llm_df.to_excel(writer, sheet_name='LLM_Only', index=False)
+        
+        # Sheet 4: Comparison (VRPTW vs LLM side by side)
+        comparison_data = []
+        for category in all_results.keys():
+            vrptw_metrics = all_results[category]['VRPTW']
+            llm_metrics = all_results[category]['LLM']
+            
+            row = {
+                'Category': category,
+                'VRPTW_Travel_Ratio_Avg': vrptw_metrics['travel_ratio_avg'],
+                'LLM_Travel_Ratio_Avg': llm_metrics['travel_ratio_avg'],
+                'VRPTW_Site_Service_Ratio_Avg': vrptw_metrics['site_service_ratio_avg'],
+                'LLM_Site_Service_Ratio_Avg': llm_metrics['site_service_ratio_avg'],
+                'VRPTW_Food_Service_Ratio_Avg': vrptw_metrics['food_service_ratio_avg'],
+                'LLM_Food_Service_Ratio_Avg': llm_metrics['food_service_ratio_avg'],
+                'VRPTW_Out_of_Service_Count': vrptw_metrics['out_of_service_count'],
+                'LLM_Out_of_Service_Count': llm_metrics['out_of_service_count']
+            }
+            comparison_data.append(row)
+        
+        comparison_df = pd.DataFrame(comparison_data)
+        comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
+    
+    print(f"✅ Results exported to Excel: {filename}")
+    return filename
+
+
+def main(iterations_per_category=100):
+    """
+    Main function to run comprehensive testing across all preference categories.
+    
+    Args:
+        iterations_per_category (int): Number of iterations to run for each category (default: 100)
+    """
+    result = calculation_matrix(iterations_per_category)
+
+
+def quick_test(iterations_per_category=5):
+    """
+    Quick test function for development and debugging.
+    
+    Args:
+        iterations_per_category (int): Number of iterations to run for each category (default: 5)
+    """
+    print(f"Running quick test with {iterations_per_category} iterations per category...")
+    result = calculation_matrix(iterations_per_category)
+    return result
+
 
 
 
 if __name__ == "__main__":
-    main()
-
-time windows:
-{'嘉義火車站': (290, 1380), '嘉義樹木園': (0, 1440), '嘉義市立博物館': (540, 1020), '嘉義製材所': (540, 1020), 'KANO遊客中心': (600, 1080), '嘉義文化創意產業園區': (600, 1080), '貳陸陸杉space': (540, 1020), '嘉木居': (600, 1020)}
-
-
-
-VRPTW system itinerary
-[{'name': '嘉義火車站', 'arrival': 0, 'service': 0, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 12, 'metadata': 'site', 'real_service': 0}, {'name': '貳陸陸杉space', 'arrival': 100, 'service': 40, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 6, 'metadata': 'food', 'real_service': 37}, {'name': '嘉木居', 'arrival': 160, 'service': 40, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 8, 'metadata': 'food', 'real_service': 37}, {'name': '嘉義文化創意產業園區', 'arrival': 210, 'service': 70, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 10, 'metadata': 'site', 'real_service': 70}, {'name': '嘉義製材所', 'arrival': 290, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 11, 'metadata': 'site', 'real_service': 47}, {'name': 'KANO遊客中心', 'arrival': 360, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 4, 'metadata': 'site', 'real_service': 47}, {'name': '嘉義樹木園', 'arrival': 420, 'service': 60, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 10, 'metadata': 'site', 'real_service': 60}, {'name': '嘉義市立博物館', 'arrival': 490, 'service': 120, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 8, 'metadata': 'site', 'real_service': 120}, {'name': '嘉義火車站', 'arrival': 1100, 'end_node': True, 'vehicle': 0, 'metadata': 'site', 'real_service': 0}]
-
-LLM system itinerary
-[{'arrival': 480, 'name': '嘉義火車站', 'service': None, 'travel': 10, 'metadata': 'site', 'real_service': 0, 'travel_raw': 14}, {'arrival': 490, 'name': '嘉義樹木園', 'service': 60, 'travel': 15, 'metadata': 'site', 'real_service': 60, 'travel_raw': 10}, {'arrival': 565, 'name': '嘉義市立博物館', 'service': 45, 'travel': 10, 'metadata': 'site', 'real_service': 120, 'travel_raw': 1}, {'arrival': 620, 'name': '嘉義製材所', 'service': 30, 'travel': 10, 'metadata': 'site', 'real_service': 47, 'travel_raw': 11}, {'arrival': 660, 'name': 'KANO遊客中心', 'service': 60, 'travel': 20, 'metadata': 'site', 'real_service': 47, 'travel_raw': 16}, {'arrival': 740, 'name': '嘉義文化創意產業園區', 'service': 90, 'travel': 15, 'metadata': 'site', 'real_service': 70, 'travel_raw': 14}, {'arrival': 845, 'name': '貳陸陸杉space', 'service': 45, 'travel': 10, 'metadata': 'food', 'real_service': 37, 'travel_raw': 6}, {'arrival': 900, 'name': '嘉木居', 'service': 60, 'travel': 20, 'metadata': 'food', 'real_service': 37, 'travel_raw': 6}, {'arrival': 980, 'name': '嘉義火車站', 'service': None, 'travel': None, 'metadata': 'site', 'real_service': 0}]
-The answer of 0: None
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No solution found!
-⚠️ VRPTW found no solution; continuing with LLM-only itinerary.
-The answer of 1: None
-time windows:
-{'嘉義火車站': (290, 1380), '愛木村休閒觀光工廠': (540, 1050), '大溪厝水環境教育園區': (0, 1440), '埤子頭植物園': (510, 960), '嘉義樹木園': (0, 1440), '嘉大植物園': (0, 1440)}
-
-
-
-VRPTW system itinerary
-[{'name': '嘉義火車站', 'arrival': 0, 'service': 0, 'vehicle': 0, 'end_node': False, 'travel': 30, 'travel_raw': 30, 'metadata': 'site', 'real_service': 0}, {'name': '嘉大植物園', 'arrival': 30, 'service': 55, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 15, 'metadata': 'site', 'real_service': 55}, {'name': '嘉義樹木園', 'arrival': 105, 'service': 60, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 17, 'metadata': 'site', 'real_service': 60}, {'name': '愛木村休閒觀光工廠', 'arrival': 185, 'service': 90, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 17, 'metadata': 'site', 'real_service': 90}, {'name': '大溪厝水環境教育園區', 'arrival': 295, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 30, 'travel_raw': 21, 'metadata': 'site', 'real_service': 50}, {'name': '埤子頭植物園', 'arrival': 375, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 8, 'metadata': 'site', 'real_service': 50}, {'name': '嘉義火車站', 'arrival': 915, 'end_node': True, 'vehicle': 0, 'metadata': 'site', 'real_service': 0}]
-
-LLM system itinerary
-[{'arrival': 480, 'name': '嘉義火車站', 'service': None, 'travel': 15, 'metadata': 'site', 'real_service': 0, 'travel_raw': 15}, {'arrival': 495, 'name': '愛木村休閒觀光工廠', 'service': 60, 'travel': 20, 'metadata': 'site', 'real_service': 90, 'travel_raw': 17}, {'arrival': 575, 'name': '大溪厝水環境教育園區', 'service': 45, 'travel': 25, 'metadata': 'site', 'real_service': 50, 'travel_raw': 21}, {'arrival': 645, 'name': '埤子頭植物園', 'service': 60, 'travel': 15, 'metadata': 'site', 'real_service': 50, 'travel_raw': 13}, {'arrival': 720, 'name': '嘉義樹木園', 'service': 90, 'travel': 10, 'metadata': 'site', 'real_service': 60, 'travel_raw': 15}, {'arrival': 820, 'name': '嘉大植物園', 'service': 60, 'travel': 20, 'metadata': 'site', 'real_service': 55, 'travel_raw': 30}, {'arrival': 900, 'name': '嘉義火車站', 'service': None, 'travel': None, 'metadata': 'site', 'real_service': 0}]
-The answer of 2: None
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No duration_in_traffic in the element, something go wrong!
-No solution found!
-⚠️ VRPTW found no solution; continuing with LLM-only itinerary.
-The answer of 3: None
-time windows:
-{'嘉義火車站': (290, 1380), '嘉義樹木園': (0, 1440), '嘉義製材所': (540, 1020), '嘉義市立博物館': (540, 1020), 'KANO遊客中心': (600, 1080), '射日塔': (540, 1080), '貳陸陸杉space': (540, 1020), 'Morikoohii 森咖啡': (600, 1080)}
-
-
-
-VRPTW system itinerary
-[{'name': '嘉義火車站', 'arrival': 0, 'service': 0, 'vehicle': 0, 'end_node': False, 'travel': 20, 'travel_raw': 14, 'metadata': 'site', 'real_service': 0}, {'name': 'KANO遊客中心', 'arrival': 170, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 4, 'metadata': 'site', 'real_service': 47}, {'name': '嘉義樹木園', 'arrival': 230, 'service': 60, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 6, 'metadata': 'site', 'real_service': 60}, {'name': '射日塔', 'arrival': 300, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 5, 'metadata': 'site', 'real_service': 50}, {'name': '貳陸陸杉space', 'arrival': 360, 'service': 40, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 7, 'metadata': 'food', 'real_service': 37}, {'name': '嘉義製材所', 'arrival': 410, 'service': 50, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 1, 'metadata': 'site', 'real_service': 47}, {'name': '嘉義市立博物館', 'arrival': 470, 'service': 120, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 3, 'metadata': 'site', 'real_service': 120}, {'name': 'Morikoohii 森咖啡', 'arrival': 600, 'service': 40, 'vehicle': 0, 'end_node': False, 'travel': 10, 'travel_raw': 10, 'metadata': 'food', 'real_service': 40}, {'name': '嘉義火車站', 'arrival': 1130, 'end_node': True, 'vehicle': 0, 'metadata': 'site', 'real_service': 0}]
-
-LLM system itinerary
-[{'arrival': 480, 'name': '嘉義火車站', 'service': None, 'travel': 10, 'metadata': 'site', 'real_service': 0, 'travel_raw': 15}, {'arrival': 490, 'name': '嘉義樹木園', 'service': 60, 'travel': 15, 'metadata': 'site', 'real_service': 60, 'travel_raw': 10}, {'arrival': 565, 'name': '嘉義製材所', 'service': 45, 'travel': 10, 'metadata': 'site', 'real_service': 47, 'travel_raw': 1}, {'arrival': 620, 'name': '嘉義市立博物館', 'service': 60, 'travel': 10, 'metadata': 'site', 'real_service': 120, 'travel_raw': 10}, {'arrival': 690, 'name': 'KANO遊客中心', 'service': 30, 'travel': 20, 'metadata': 'site', 'real_service': 47, 'travel_raw': 3}, {'arrival': 740, 'name': '射日塔', 'service': 45, 'travel': 15, 'metadata': 'site', 'real_service': 50, 'travel_raw': 5}, {'arrival': 800, 'name': '貳陸陸杉space', 'service': 30, 'travel': 10, 'metadata': 'food', 'real_service': 37, 'travel_raw': 6}, {'arrival': 840, 'name': 'Morikoohii 森咖啡', 'service': 60, 'travel': 20, 'metadata': 'food', 'real_service': 40, 'travel_raw': 10}, {'arrival': 920, 'name': '嘉義火車站', 'service': None, 'travel': None, 'metadata': 'site', 'real_service': 0}]
-The answer of 4: None
+    import sys
+    
+    # Check if iterations parameter is provided via command line
+    if len(sys.argv) > 1:
+        try:
+            iterations = int(sys.argv[1])
+            print(f"Running with {iterations} iterations per category")
+            main(iterations)
+        except ValueError:
+            print("Invalid iterations parameter. Using default 100 iterations per category.")
+            main()
+    else:
+        print("Using default 100 iterations per category.")
+        print("To specify different iterations: python llm_output.py <number_of_iterations>")
+        main()
