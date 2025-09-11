@@ -11,6 +11,13 @@ ortools = "^9.11.4210"
 googlemaps = "^4.10.0"
 python-dotenv = "^1.0.1"
 langchain-openai = "^0.3.32"
+langchain-text-splitters = "^0.3.0"
+langchain-community = "^0.3.3"
+chromadb = "^0.5.15"
+langchain-core = "^0.3.12"
+langchain-chroma = "^0.1.4"
+llama-stack = "^0.0.47"
+langchain-google-genai = "^2.0.7"
 langchain = "^0.3.27"
 
 

@@ -69,7 +69,6 @@ def combine_with_retrieval(query, retrieved_docs):
         + "\n\n相關文件：\n"
         + "\n\n".join([doc.page_content for doc in retrieved_docs])
         + query
-        + "\n請根據上述資料產生出使用者偏好敘述"
     )
     return combined_input
 

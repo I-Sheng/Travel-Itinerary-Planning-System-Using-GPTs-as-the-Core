@@ -162,7 +162,6 @@ def print_solution(data, manager, routing, assignment):  # pylint:disable=too-ma
             plan_output += f"Travel Time: {travel_time} -> "
             arr[idx]['travel'] = travel_time
             arr[idx]['travel_raw'] = data["time_matrix"][manager.IndexToNode(previous_index)][manager.IndexToNode(index)]['raw']
-            arr[idx]['real_service'] = data["real_service"][manager.IndexToNode(index)]
 
         # Handle the last node
         idx += 1
@@ -171,7 +170,7 @@ def print_solution(data, manager, routing, assignment):  # pylint:disable=too-ma
         node = manager.IndexToNode(index)
         arrival_time = assignment.Min(time_var)
         plan_output += f" Node {data['name'][node]} - Arrival: {arrival_time}, \n"
-        arr[idx] = {'name': data['name'][node], 'arrival': arrival_time, 'end_node': True, 'vehicle': vehicle_id}
+        arr[idx] = {'name': data['name'][node], 'arrival': arrival_time + 480, 'end_node': True, 'vehicle': vehicle_id} # +480 for 8 a.m.
 
         route_time += assignment.Value(time_var)
         plan_output += f"Total Time of the route: {route_time} minutes\n"
