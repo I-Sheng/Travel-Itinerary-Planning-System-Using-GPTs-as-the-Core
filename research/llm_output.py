@@ -142,7 +142,7 @@ def planning(preference):
         cur_poi = plan_itinerary_llm[i]['name']
         nxt_poi = plan_itinerary_llm[i+1]['name']
         plan_itinerary_llm[i]['travel_raw'] = time_matrix[cur_poi][nxt_poi]
-        
+
     #print('\n\n')
     #print('VRPTW system itinerary')
     #print(plan_itinerary)
@@ -158,7 +158,7 @@ def calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows):
     4. Number of sites/food out of service time
     """
     import statistics
-    
+
     def calculate_travel_ratios(itinerary):
         """Calculate travel/travel_raw ratios"""
         ratios = []
@@ -167,18 +167,18 @@ def calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows):
                 ratio = itinerary[i]['travel'] / itinerary[i]['travel_raw']
                 ratios.append(ratio)
         return ratios
-    
+
     def calculate_service_ratios(itinerary, metadata_type):
         """Calculate service/real_service ratios for specific metadata type"""
         ratios = []
         for poi in itinerary:
-            if (poi.get('metadata') == metadata_type and 
-                poi.get('service') and poi.get('real_service') and 
+            if (poi.get('metadata') == metadata_type and
+                poi.get('service') and poi.get('real_service') and
                 poi['real_service'] > 0):
                 ratio = poi['service'] / poi['real_service']
                 ratios.append(ratio)
         return ratios
-    
+
     def count_out_of_service_time(itinerary, time_windows):
         """Count sites/food that are out of service time"""
         count = 0
@@ -187,67 +187,67 @@ def calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows):
                 time_window = time_windows[poi['name']]
                 arrival = poi['arrival']
                 service_time = poi.get('service', 0)
-                
+
                 # Handle None service time
                 if service_time is None:
                     service_time = 0
-                
+
                 # Check if arrival time is before opening or departure time is after closing
-                if (arrival < time_window[0] or 
+                if (arrival < time_window[0] or
                     arrival + service_time > time_window[1]):
                     count += 1
         return count
-    
+
     # Calculate indicators for both systems
     vrptw_indicators = {}
     llm_indicators = {}
-    
+
     # 1. Travel ratios
     vrptw_travel_ratios = calculate_travel_ratios(plan_itinerary)
     llm_travel_ratios = calculate_travel_ratios(plan_itinerary_llm)
-    
+
     vrptw_indicators['travel_ratio'] = {
         'average': statistics.mean(vrptw_travel_ratios) if vrptw_travel_ratios else 0,
         'variation': statistics.stdev(vrptw_travel_ratios) if len(vrptw_travel_ratios) > 1 else 0
     }
-    
+
     llm_indicators['travel_ratio'] = {
         'average': statistics.mean(llm_travel_ratios) if llm_travel_ratios else 0,
         'variation': statistics.stdev(llm_travel_ratios) if len(llm_travel_ratios) > 1 else 0
     }
-    
+
     # 2. Service ratios for sites
     vrptw_site_ratios = calculate_service_ratios(plan_itinerary, 'site')
     llm_site_ratios = calculate_service_ratios(plan_itinerary_llm, 'site')
-    
+
     vrptw_indicators['site_service_ratio'] = {
         'average': statistics.mean(vrptw_site_ratios) if vrptw_site_ratios else 0,
         'variation': statistics.stdev(vrptw_site_ratios) if len(vrptw_site_ratios) > 1 else 0
     }
-    
+
     llm_indicators['site_service_ratio'] = {
         'average': statistics.mean(llm_site_ratios) if llm_site_ratios else 0,
         'variation': statistics.stdev(llm_site_ratios) if len(llm_site_ratios) > 1 else 0
     }
-    
+
     # 3. Service ratios for food
     vrptw_food_ratios = calculate_service_ratios(plan_itinerary, 'food')
     llm_food_ratios = calculate_service_ratios(plan_itinerary_llm, 'food')
-    
+
     vrptw_indicators['food_service_ratio'] = {
         'average': statistics.mean(vrptw_food_ratios) if vrptw_food_ratios else 0,
         'variation': statistics.stdev(vrptw_food_ratios) if len(vrptw_food_ratios) > 1 else 0
     }
-    
+
     llm_indicators['food_service_ratio'] = {
         'average': statistics.mean(llm_food_ratios) if llm_food_ratios else 0,
         'variation': statistics.stdev(llm_food_ratios) if len(llm_food_ratios) > 1 else 0
     }
-    
+
     # 4. Out of service time count
     vrptw_indicators['out_of_service_count'] = count_out_of_service_time(plan_itinerary, time_windows)
     llm_indicators['out_of_service_count'] = count_out_of_service_time(plan_itinerary_llm, time_windows)
-    
+
     return {
         'VRPTW': vrptw_indicators,
         'LLM': llm_indicators
@@ -256,27 +256,27 @@ def calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows):
 def test_indicators_with_example(plan_itinerary, plan_itinerary_llm, time_windows):
     # Calculate indicators
     indicators = calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows)
-    
+
     print("=== INDICATOR ANALYSIS RESULTS ===")
     print()
-    
+
     for system, data in indicators.items():
         print(f"--- {system} System ---")
         print(f"1. Travel/Travel_raw Ratio:")
         print(f"   Average: {data['travel_ratio']['average']:.4f}")
         print(f"   Variation: {data['travel_ratio']['variation']:.4f}")
         print()
-        
+
         print(f"2. Service/Real_service Ratio (Sites):")
         print(f"   Average: {data['site_service_ratio']['average']:.4f}")
         print(f"   Variation: {data['site_service_ratio']['variation']:.4f}")
         print()
-        
+
         print(f"3. Service/Real_service Ratio (Food):")
         print(f"   Average: {data['food_service_ratio']['average']:.4f}")
         print(f"   Variation: {data['food_service_ratio']['variation']:.4f}")
         print()
-        
+
         print(f"4. Out of Service Time Count:")
         print(f"   Count: {data['out_of_service_count']}")
         print()
@@ -286,26 +286,24 @@ def test_indicators_with_example(plan_itinerary, plan_itinerary_llm, time_window
 def calculation_matrix(iterations_per_category=100):
     preference_list = [
         "親子旅遊",
-        "文化古蹟", 
-        "自然風光",
+        "古蹟之旅",
         "冒險體驗",
         "購物旅遊",
-        "療癒放鬆",
         "生態旅遊",
         "藝術之旅",
     ]
-    
+
     # Dictionary to store all results
     all_results = {}
-    
+
     print(f"Starting comprehensive testing for {len(preference_list)} categories with {iterations_per_category} iterations each...")
     print(f"Total iterations: {len(preference_list) * iterations_per_category}")
     print("=" * 80)
-    
+
     for category_idx, preference in enumerate(preference_list, 1):
         print(f"\n[{category_idx}/{len(preference_list)}] Testing category: {preference}")
         print("-" * 50)
-        
+
         # Store results for this category
         category_results = {
             'VRPTW': {
@@ -327,19 +325,19 @@ def calculation_matrix(iterations_per_category=100):
                 'out_of_service_count': []
             }
         }
-        
+
         successful_runs = 0
-        
+
         for iteration in range(iterations_per_category):
             if (iteration + 1) % max(1, iterations_per_category // 5) == 0:  # Show progress every 20% of iterations
                 print(f"  Progress: {iteration + 1}/{iterations_per_category} iterations completed")
-            
+
             try:
                 ans = planning(preference)
                 if ans is not None:
                     plan_itinerary, plan_itinerary_llm, time_windows = ans
                     indicators = calculate_indicators(plan_itinerary, plan_itinerary_llm, time_windows)
-                    
+
                     # Store VRPTW results
                     category_results['VRPTW']['travel_ratio_avg'].append(indicators['VRPTW']['travel_ratio']['average'])
                     category_results['VRPTW']['travel_ratio_var'].append(indicators['VRPTW']['travel_ratio']['variation'])
@@ -348,7 +346,7 @@ def calculation_matrix(iterations_per_category=100):
                     category_results['VRPTW']['food_service_ratio_avg'].append(indicators['VRPTW']['food_service_ratio']['average'])
                     category_results['VRPTW']['food_service_ratio_var'].append(indicators['VRPTW']['food_service_ratio']['variation'])
                     category_results['VRPTW']['out_of_service_count'].append(indicators['VRPTW']['out_of_service_count'])
-                    
+
                     # Store LLM results
                     category_results['LLM']['travel_ratio_avg'].append(indicators['LLM']['travel_ratio']['average'])
                     category_results['LLM']['travel_ratio_var'].append(indicators['LLM']['travel_ratio']['variation'])
@@ -357,15 +355,15 @@ def calculation_matrix(iterations_per_category=100):
                     category_results['LLM']['food_service_ratio_avg'].append(indicators['LLM']['food_service_ratio']['average'])
                     category_results['LLM']['food_service_ratio_var'].append(indicators['LLM']['food_service_ratio']['variation'])
                     category_results['LLM']['out_of_service_count'].append(indicators['LLM']['out_of_service_count'])
-                    
+
                     successful_runs += 1
-                    
+
             except Exception as e:
                 print(f"  Error in iteration {iteration + 1}: {str(e)}")
                 continue
-        
+
         print(f"  Completed: {successful_runs}/{iterations_per_category} successful runs for {preference}")
-        
+
         # Calculate averages for this category
         category_averages = {}
         for system in ['VRPTW', 'LLM']:
@@ -375,13 +373,12 @@ def calculation_matrix(iterations_per_category=100):
                     category_averages[system][metric] = statistics.mean(category_results[system][metric])
                 else:
                     category_averages[system][metric] = 0
-        
+
         all_results[preference] = category_averages
-    
-    # Create DataFrame and export to CSV/Excel
+
+    # Create DataFrame and export to CSV (Excel export removed)
     export_results_to_csv(all_results)
-    export_results_to_excel(all_results)
-    
+
     return all_results
 
 
@@ -390,101 +387,130 @@ def calculation_matrix(iterations_per_category=100):
 
 
 def export_results_to_csv(all_results):
-    """Export results to CSV file"""
+    """Export results to CSV files in both wide and long formats for plotting 7 figures.
+
+    Wide columns:
+      - Category, System,
+      - Travel_Avg, Travel_Std,
+      - SiteService_Avg, SiteService_Std,
+      - FoodService_Avg, FoodService_Std,
+      - OutOfService_Count_Avg
+
+    Long columns (tidy):
+      - Category, System, Indicator, Metric, Value
+        Indicator in {travel, site_service, food_service, out_of_service}
+        Metric in {avg, std, count}
+    """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"indicator_results_{timestamp}.csv"
-    
-    # Prepare data for CSV
-    csv_data = []
-    
+    wide_filename = f"indicator_results_summary_{timestamp}.csv"
+    long_filename = f"indicator_results_long_{timestamp}.csv"
+
+    # Mapping: Chinese preference category -> English
+    category_en_map = {
+        '親子旅遊': 'Family Travel',
+        '古蹟之旅': 'Historical Sites',
+        '冒險體驗': 'Adventure Experience',
+        '購物旅遊': 'Shopping Travel',
+        '生態旅遊': 'Ecotourism',
+        '藝術之旅': 'Art Journey',
+    }
+
+    # Prepare data for wide CSV
+    wide_rows = []
+    long_rows = []
+
     for category, systems in all_results.items():
         for system, metrics in systems.items():
-            row = {
+            category_en = category_en_map.get(category, category)
+            # Wide
+            wide_row = {
                 'Category': category,
+                'Category_EN': category_en,
                 'System': system,
-                'Travel_Ratio_Avg': metrics['travel_ratio_avg'],
-                'Travel_Ratio_Var': metrics['travel_ratio_var'],
-                'Site_Service_Ratio_Avg': metrics['site_service_ratio_avg'],
-                'Site_Service_Ratio_Var': metrics['site_service_ratio_var'],
-                'Food_Service_Ratio_Avg': metrics['food_service_ratio_avg'],
-                'Food_Service_Ratio_Var': metrics['food_service_ratio_var'],
-                'Out_of_Service_Count': metrics['out_of_service_count']
+                'Travel_Avg': metrics['travel_ratio_avg'],
+                'Travel_Std': metrics['travel_ratio_var'],
+                'SiteService_Avg': metrics['site_service_ratio_avg'],
+                'SiteService_Std': metrics['site_service_ratio_var'],
+                'FoodService_Avg': metrics['food_service_ratio_avg'],
+                'FoodService_Std': metrics['food_service_ratio_var'],
+                'OutOfService_Count_Avg': metrics['out_of_service_count'],
             }
-            csv_data.append(row)
-    
-    # Create DataFrame and save
-    df = pd.DataFrame(csv_data)
-    df.to_csv(filename, index=False, encoding='utf-8-sig')
-    print(f"\n✅ Results exported to CSV: {filename}")
-    return filename
+            wide_rows.append(wide_row)
 
-
-def export_results_to_excel(all_results):
-    """Export results to Excel file with multiple sheets"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"indicator_results_{timestamp}.xlsx"
-    
-    with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-        # Sheet 1: Summary by Category and System
-        summary_data = []
-        for category, systems in all_results.items():
-            for system, metrics in systems.items():
-                row = {
+            # Long – 6 metrics for three indicators + count
+            long_rows.extend([
+                {
                     'Category': category,
+                    'Category_EN': category_en,
                     'System': system,
-                    'Travel_Ratio_Avg': metrics['travel_ratio_avg'],
-                    'Travel_Ratio_Var': metrics['travel_ratio_var'],
-                    'Site_Service_Ratio_Avg': metrics['site_service_ratio_avg'],
-                    'Site_Service_Ratio_Var': metrics['site_service_ratio_var'],
-                    'Food_Service_Ratio_Avg': metrics['food_service_ratio_avg'],
-                    'Food_Service_Ratio_Var': metrics['food_service_ratio_var'],
-                    'Out_of_Service_Count': metrics['out_of_service_count']
-                }
-                summary_data.append(row)
-        
-        summary_df = pd.DataFrame(summary_data)
-        summary_df.to_excel(writer, sheet_name='Summary', index=False)
-        
-        # Sheet 2: VRPTW Results Only
-        vrptw_data = [row for row in summary_data if row['System'] == 'VRPTW']
-        vrptw_df = pd.DataFrame(vrptw_data)
-        vrptw_df.to_excel(writer, sheet_name='VRPTW_Only', index=False)
-        
-        # Sheet 3: LLM Results Only
-        llm_data = [row for row in summary_data if row['System'] == 'LLM']
-        llm_df = pd.DataFrame(llm_data)
-        llm_df.to_excel(writer, sheet_name='LLM_Only', index=False)
-        
-        # Sheet 4: Comparison (VRPTW vs LLM side by side)
-        comparison_data = []
-        for category in all_results.keys():
-            vrptw_metrics = all_results[category]['VRPTW']
-            llm_metrics = all_results[category]['LLM']
-            
-            row = {
-                'Category': category,
-                'VRPTW_Travel_Ratio_Avg': vrptw_metrics['travel_ratio_avg'],
-                'LLM_Travel_Ratio_Avg': llm_metrics['travel_ratio_avg'],
-                'VRPTW_Site_Service_Ratio_Avg': vrptw_metrics['site_service_ratio_avg'],
-                'LLM_Site_Service_Ratio_Avg': llm_metrics['site_service_ratio_avg'],
-                'VRPTW_Food_Service_Ratio_Avg': vrptw_metrics['food_service_ratio_avg'],
-                'LLM_Food_Service_Ratio_Avg': llm_metrics['food_service_ratio_avg'],
-                'VRPTW_Out_of_Service_Count': vrptw_metrics['out_of_service_count'],
-                'LLM_Out_of_Service_Count': llm_metrics['out_of_service_count']
-            }
-            comparison_data.append(row)
-        
-        comparison_df = pd.DataFrame(comparison_data)
-        comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
-    
-    print(f"✅ Results exported to Excel: {filename}")
-    return filename
+                    'Indicator': 'travel',
+                    'Metric': 'avg',
+                    'Value': metrics['travel_ratio_avg'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'travel',
+                    'Metric': 'std',
+                    'Value': metrics['travel_ratio_var'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'site_service',
+                    'Metric': 'avg',
+                    'Value': metrics['site_service_ratio_avg'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'site_service',
+                    'Metric': 'std',
+                    'Value': metrics['site_service_ratio_var'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'food_service',
+                    'Metric': 'avg',
+                    'Value': metrics['food_service_ratio_avg'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'food_service',
+                    'Metric': 'std',
+                    'Value': metrics['food_service_ratio_var'],
+                },
+                {
+                    'Category': category,
+                    'Category_EN': category_en,
+                    'System': system,
+                    'Indicator': 'out_of_service',
+                    'Metric': 'count',
+                    'Value': metrics['out_of_service_count'],
+                },
+            ])
+
+    # Save wide CSV
+    pd.DataFrame(wide_rows).to_csv(wide_filename, index=False, encoding='utf-8-sig')
+    # Save long CSV
+    pd.DataFrame(long_rows).to_csv(long_filename, index=False, encoding='utf-8-sig')
+
+    print(f"\n✅ Results exported to CSV (wide): {wide_filename}")
+    print(f"✅ Results exported to CSV (long): {long_filename}")
+    return wide_filename
 
 
 def main(iterations_per_category=100):
     """
     Main function to run comprehensive testing across all preference categories.
-    
+
     Args:
         iterations_per_category (int): Number of iterations to run for each category (default: 100)
     """
@@ -494,7 +520,7 @@ def main(iterations_per_category=100):
 def quick_test(iterations_per_category=5):
     """
     Quick test function for development and debugging.
-    
+
     Args:
         iterations_per_category (int): Number of iterations to run for each category (default: 5)
     """
@@ -507,7 +533,7 @@ def quick_test(iterations_per_category=5):
 
 if __name__ == "__main__":
     import sys
-    
+
     # Check if iterations parameter is provided via command line
     if len(sys.argv) > 1:
         try:
